@@ -1,0 +1,13 @@
+# Solidity specific
+*.swp
+*.swo
+*.tmp
+*.tmp.*
+*.log
+*.log.*
+*.backup
+build/
+contracts/
+coverage/
+node_modules/
+network/
