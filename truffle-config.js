@@ -11,7 +11,7 @@ module.exports = {
     binanceTestnet: {
       provider: () => provider,
       network_id: "97",
-      gas: 29000000,
+      gas: 2900000,
     },
     develop: {
       port: 8545,
