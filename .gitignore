@@ -7,7 +7,6 @@
 *.log.*
 *.backup
 build/
-contracts/
 coverage/
 node_modules/
 network/
