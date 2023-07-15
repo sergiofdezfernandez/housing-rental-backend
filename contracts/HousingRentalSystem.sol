@@ -47,6 +47,11 @@ contract HousingRentalSystem {
   mapping(uint256 => LeaseAgreement) public leaseAgreements;
   uint256 public leaseAgreementCount;
 
+  event PropertyAdded(uint256 propertyId, address payable landlord, uint256 price);
+  event PropertyReturned(uint256 agreementId);
+  event PropertyProposalRent(uint256 agreementId, address payable tenant, uint256 houseId, uint256 duration);
+  event PropertyPaid(uint256 agreementId, uint256 amount);
+
   constructor() {
     propertiesCount = 0;
     leaseAgreementCount = 0;
@@ -72,6 +77,7 @@ contract HousingRentalSystem {
       securityDeposit: securityDeposit,
       isRented: false
     });
+    emit PropertyAdded(propertiesCount, payable(msg.sender), price);
   }
 
   function rentProperty(Tenant memory tenant, uint256 propertyId, uint256 duration, uint256 deposit) external payable {
@@ -92,6 +98,10 @@ contract HousingRentalSystem {
       totalRentPaid: 0,
       state: State.Created
     });
+  }
+
+  function getPropertyById(uint256 propertyId) external view returns (Property memory property) {
+    return properties[propertyId];
   }
 
   modifier onlyTenant(uint256 agreementId) {
@@ -123,5 +133,6 @@ contract HousingRentalSystem {
     properties[agreement.property.id].isRented = false;
     uint256 rentAmount = properties[agreement.id].price * agreement.leaseDuration;
     payable(msg.sender).transfer(rentAmount);
+    emit PropertyReturned(agreementId);
   }
 }
