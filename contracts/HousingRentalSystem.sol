@@ -44,6 +44,7 @@ contract HousingRentalSystem {
 
   mapping(uint256 => Property) public properties;
   uint256 public propertiesCount;
+  uint256[] public propertiesKeys;
   mapping(uint256 => LeaseAgreement) public leaseAgreements;
   uint256 public leaseAgreementCount;
 
@@ -77,6 +78,7 @@ contract HousingRentalSystem {
       securityDeposit: securityDeposit,
       isRented: false
     });
+    propertiesKeys.push(propertiesCount);
     emit PropertyAdded(propertiesCount, payable(msg.sender), price);
   }
 
@@ -100,8 +102,12 @@ contract HousingRentalSystem {
     });
   }
 
-  function getPropertyById(uint256 propertyId) external view returns (Property memory property) {
-    return properties[propertyId];
+  function getRegisteredProperties() external view returns (Property[] memory) {
+    Property[] memory result = new Property[](propertiesKeys.length);
+    for (uint256 i = 0; i < propertiesKeys.length; i++) {
+      result[i] = properties[propertiesKeys[i]];
+    }
+    return result;
   }
 
   modifier onlyTenant(uint256 agreementId) {
