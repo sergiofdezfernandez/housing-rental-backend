@@ -128,6 +128,7 @@ contract HousingRentalSystem {
   }
 
   function acceptLeaseAgreement(uint256 agreementId) external onlyTenant(agreementId) {
+    require(agreementId <= leaseAgreementCount && agreementId > 0, 'Invalid agreement ID');
     require(leaseAgreements[agreementId].state == State.Created, 'LeaseAgreement is in an invalid state');
     LeaseAgreement storage agreement = leaseAgreements[agreementId];
     agreement.state = State.Started;
@@ -138,6 +139,7 @@ contract HousingRentalSystem {
   }
 
   function payRent(uint256 agreementId) external payable onlyTenant(agreementId) {
+    require(agreementId <= leaseAgreementCount && agreementId > 0, 'Invalid agreement ID');
     LeaseAgreement storage agreement = leaseAgreements[agreementId];
     require(agreement.state == State.Started, 'LeaseAgreement is in an invalid state');
     require(msg.value == properties[agreement.id].price, 'Incorrect Rent amount');
@@ -150,8 +152,8 @@ contract HousingRentalSystem {
     require(agreement.state == State.Started, 'LeaseAgreement is in an invalid state');
     agreement.state = State.Terminated;
     properties[agreement.property.id].isRented = false;
-    uint256 rentAmount = properties[agreement.id].price * agreement.leaseDuration;
-    payable(msg.sender).transfer(rentAmount);
+    uint256 rentAmount = agreement.totalRentPaid;
+    payable(agreement.property.landlord.id).transfer(rentAmount);
     emit PropertyReturned(agreementId);
   }
 }
