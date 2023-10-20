@@ -9,16 +9,13 @@ module.exports = {
     binanceTestnet: {
       provider: () => provider,
       network_id: '97',
-      gas: 3000000,
+      gas: 5000000,
+    },
+    ganache:{
+      host: "127.0.0.1",
+      port: 7545,
+      network_id: 5777
     }
-    // development: {
-    //   provider: new HDWalletProvider({
-    //     providerOrUrl: 'http://127.0.0.1:8545',
-    //     privateKeys: ['0xa7eb5a1ee0f2af4c4e511909a3f3fbc8c6217280b23086aa2a82ba0157dbaab3'],
-    //   }),
-    //   network_id: '1689801624516',
-    //   gas: 30000000
-    // }
   },
   compilers: {
     solc: {

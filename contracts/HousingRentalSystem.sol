@@ -47,11 +47,13 @@ contract HousingRentalSystem {
   uint256[] public propertiesKeys;
   mapping(uint256 => LeaseAgreement) public leaseAgreements;
   uint256 public leaseAgreementCount;
+  uint256[] public leaseAgreementKeys;
 
   event PropertyAdded(uint256 propertyId, address payable landlord, uint256 price);
   event PropertyReturned(uint256 agreementId);
   event PropertyProposalRent(uint256 agreementId, address payable tenant, uint256 houseId, uint256 duration);
   event PropertyPaid(uint256 agreementId, uint256 amount);
+  event LeaseAgreementProposal(uint256 leaseAgreementCount, address payable tenant, uint propertyId);
 
   constructor() {
     propertiesCount = 0;
@@ -82,7 +84,7 @@ contract HousingRentalSystem {
     emit PropertyAdded(propertiesCount, payable(msg.sender), price);
   }
 
-  function rentProperty(Tenant memory tenant, uint256 propertyId, uint256 duration, uint256 deposit) external payable {
+  function rentProperty(Tenant memory tenant, uint256 propertyId, uint256 duration, uint256 deposit) public payable {
     Property memory property = properties[propertyId];
     require(propertyId <= propertiesCount && propertyId > 0, 'Invalid property ID');
     require(!property.isRented, 'Property is already rented');
@@ -100,6 +102,8 @@ contract HousingRentalSystem {
       totalRentPaid: 0,
       state: State.Created
     });
+    leaseAgreementKeys.push(leaseAgreementCount);
+    emit LeaseAgreementProposal(leaseAgreementCount, payable(msg.sender), propertyId);
   }
 
   function getRegisteredProperties() external view returns (Property[] memory) {
@@ -113,6 +117,14 @@ contract HousingRentalSystem {
   modifier onlyTenant(uint256 agreementId) {
     require(msg.sender == leaseAgreements[agreementId].tenant.id, 'Only the tenant can perform this action');
     _;
+  }
+
+  function getRegisteredLeaseAgreement() external view returns (LeaseAgreement[] memory) {
+    LeaseAgreement[] memory result = new LeaseAgreement[](leaseAgreementKeys.length);
+    for (uint256 i = 0; i < leaseAgreementKeys.length; i++) {
+      result[i] = leaseAgreements[leaseAgreementKeys[i]];
+    }
+    return result;
   }
 
   function acceptLeaseAgreement(uint256 agreementId) external onlyTenant(agreementId) {
@@ -129,6 +141,7 @@ contract HousingRentalSystem {
     LeaseAgreement storage agreement = leaseAgreements[agreementId];
     require(agreement.state == State.Started, 'LeaseAgreement is in an invalid state');
     require(msg.value == properties[agreement.id].price, 'Incorrect Rent amount');
+    agreement.totalRentPaid += msg.value;
   }
 
   function returnProperty(uint256 agreementId) external payable onlyTenant(agreementId) {

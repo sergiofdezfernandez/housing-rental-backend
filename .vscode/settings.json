@@ -1,5 +1,8 @@
 {
-    "editor.defaultFormatter": "esbenp.prettier-vscode",
-    "prettier.printWidth": 200,
-    "prettier.singleQuote": true
+  "editor.defaultFormatter": "esbenp.prettier-vscode",
+  "prettier.printWidth": 200,
+  "prettier.singleQuote": true,
+  "[javascript]": {
+    "editor.defaultFormatter": "vscode.typescript-language-features"
+  }
 }
