@@ -34,7 +34,7 @@ contract("HousingRentalSystem", (accounts) => {
             1,
             12,
             1800,
-            { from: accounts[2], value: 900 * 12 }
+            { from: accounts[2], value: 900 }
         )
 
         truffleAssert.eventEmitted(result, 'LeaseAgreementProposal', ev => {
@@ -55,26 +55,8 @@ contract("HousingRentalSystem", (accounts) => {
             200,
             12,
             1800,
-            { from: accounts[2], value: 900 * 12 }), 'Invalid property ID')
+            { from: accounts[2], value: 900 }), 'Invalid property ID')
     });
-
-    //TODO review
-    // it("should not allow renting an already rented property", async () => {
-    //     // Test cases where renting should fail if the property is already rented.
-    //     const tenant = {
-    //         id: accounts[2],
-    //         name: "Jordan",
-    //         phoneNumber: "624874852",
-    //         email: "jordan@uniovi.es"
-    //     }
-
-    //     await truffleAssert.reverts(contractInstance.rentProperty(
-    //         tenant,
-    //         1,
-    //         12,
-    //         1800,
-    //         { from: accounts[2], value: 900 * 12 }), 'Property is already rented')
-    // });
 
     it("should not allow renting a property with invalid deposit", async () => {
         await contractInstance.registerProperty('Paseo de la florida 18, 5ºE', 'Fabulosa casa con vistas al mar', 900, 1800, "Sergio", "666999666", "sergiofdez@gmail.com", { from: accounts[1] })
@@ -90,17 +72,13 @@ contract("HousingRentalSystem", (accounts) => {
             2,
             12,
             1799,
-            { from: accounts[2], value: 900 * 12 }), 'Deposit does not match to the property deposit')
+            { from: accounts[2], value: 900 }), 'Deposit does not match to the property deposit')
     });
 
     it("should accept a lease agreement", async () => {
         await contractInstance.acceptLeaseAgreement(1, { from: accounts[2] })
         const agreements = await contractInstance.getRegisteredLeaseAgreement()
         assert.equal(agreements[0].state, 1)
-    });
-
-    it("should not accept an invalid lease agreement (Invalid State)", async () => {
-
     });
 
     it("should pay rent for a lease agreement", async () => {
@@ -110,10 +88,18 @@ contract("HousingRentalSystem", (accounts) => {
     });
 
     it("should not pay rent for an invalid lease agreement (Incorrect rent amount)", async () => {
-        await truffleAssert.reverts(contractInstance.payRent(1, { from: accounts[2], value: 800 }), 'Incorrect Rent amount')
+        await truffleAssert.reverts(contractInstance.payRent(1, { from: accounts[2], value: 30000 }), 'Incorrect Rent amount')
+    });
+
+
+    it("should return contract balance after some payments", async () => {
+        const result = await contractInstance.getBalance();
+        // 2 leaseAgreements payed
+        assert.equal(result.toNumber(), 1800)
     });
 
     it("should return a property", async () => {
+        await contractInstance.payRent(1, { from: accounts[2], value: 900 * 11 })
         const result = await contractInstance.returnProperty(1, { from: accounts[2] })
         const agreements = await contractInstance.getRegisteredLeaseAgreement()
         assert.equal(agreements[0].state, 2)
@@ -124,7 +110,62 @@ contract("HousingRentalSystem", (accounts) => {
         })
     });
 
+    it("should return contract balance after return property", async () => {
+        const result = await contractInstance.getBalance();
+        assert.equal(result.toNumber(), 900)
+    });
+
     it("should not return a property if the lease agreement is in an invalid state", async () => {
-        // Test cases where returning a property should fail if the agreement is in an invalid state.
+        const tenant = {
+            id: accounts[3],
+            name: "Manolo",
+            phoneNumber: "624874852",
+            email: "manolo@uniovi.es"
+        }
+        await contractInstance.rentProperty(
+            tenant,
+            1,
+            12,
+            1800,
+            { from: accounts[2], value: 900 }
+        )
+        const agreements = await contractInstance.getRegisteredLeaseAgreement()
+        assert.equal(agreements[1].state, 0)
+        await truffleAssert.reverts(contractInstance.returnProperty(2, { from: accounts[3] }), 'LeaseAgreement is in an invalid state')
+    });
+
+    it("should not return a property if rents have not been payed yet", async () => {
+        const tenant = {
+            id: accounts[3],
+            name: "Manolo",
+            phoneNumber: "624874852",
+            email: "manolo@uniovi.es"
+        }
+        await contractInstance.acceptLeaseAgreement(2, { from: accounts[3] })
+        await contractInstance.rentProperty(
+            tenant,
+            2,
+            12,
+            1800,
+            { from: accounts[2], value: 900 }
+        )
+        const agreements = await contractInstance.getRegisteredLeaseAgreement()
+        assert.equal(agreements[2].state, 0)
+        await truffleAssert.reverts(contractInstance.returnProperty(2, { from: accounts[3] }), 'Not all contract rents have been paid yet')
+    });
+
+    it("should not allow renting an already rented property", async () => {
+        const tenant = {
+            id: accounts[4],
+            name: "Sara",
+            phoneNumber: "624874852",
+            email: "sara@uniovi.es"
+        }
+        await truffleAssert.reverts(contractInstance.rentProperty(
+            tenant,
+            1,
+            12,
+            1800,
+            { from: accounts[4], value: 900 }), 'Property is already rented')
     });
 });
